@@ -84,12 +84,12 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 	pthread_mutex_lock(mbox->mutex);
 
-	while(mbox->cbuffer->size == mbox->cbuffer->max_size) {
+	while( size_cbuffer_t(mbox->cbuffer) == mbox->cbuffer->max_size) {
 
 		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
 	}
 
-	int unico_elemento= mbox->cbuffer->size;
+	int unico_elemento= size_cbuffer_t(mbox->cbuffer);
 	mbox_post(mbox,msg);
 
 	if (!unico_elemento) {
