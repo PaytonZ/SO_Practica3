@@ -79,24 +79,22 @@ void mbox_free(struct sys_mbox *mbox) {
  ** se "informará" a potenciales hilos que estuvieran esperando en un "mbox_fetch()" a que hubiera elementos que consumir del buffer
  **/
 /*-----------------------------------------------------------------------------------*/
-void
-mbox_post( struct sys_mbox *mbox, void *msg)
+void mbox_post( struct sys_mbox *mbox, void *msg)
 {
 
 	pthread_mutex_lock(mbox->mutex);
 
-	while(mbox->cbuffer->size == mbox->cbuffer->max_size)
-	{
-		pthread_cond_wait(mbox->not_full->cond,mbox->mutex);
+	while(mbox->cbuffer->size == mbox->cbuffer->max_size) {
+
+		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
 	}
+
 	int unico_elemento= mbox->cbuffer->size;
 	mbox_post(mbox,msg);
-	if (!unico_elemento)
-	{
-		pthread_cond_broadcast(mbox->not_empty->cond);
+
+	if (!unico_elemento) {
+		pthread_cond_broadcast( &(mbox->not_empty->cond) );
 	}
-
-
 }
 
 /*-----------------------------------------------------------------------------------*/

@@ -40,14 +40,14 @@ sys_sem_wait(struct sys_sem *sem)
 {	
 
 	//Completar 
-	pthread_mutex_lock(&sem->mutex);
+	pthread_mutex_lock( &(sem->mutex) );
 
 	while(sem->c ==0)
 	{
-		pthread_cond_wait(&sem->cond);
+		pthread_cond_wait( &(sem->cond), &(sem->mutex) );
 	}
 	sem->c--;
-	pthread_mutex_unlock(&sem->mutex);
+	pthread_mutex_unlock( &(sem->mutex) );
 
 	return 0;
 }
