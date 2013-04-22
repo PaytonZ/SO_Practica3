@@ -84,17 +84,25 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 	pthread_mutex_lock(mbox->mutex);
 
+	if (size_cbuffer_t(mbox->cbuffer) == mbox->cbuffer->max_size) {
+		mbox->wait_send++;
+	}
+
 	while( size_cbuffer_t(mbox->cbuffer) == mbox->cbuffer->max_size) {
 
 		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
 	}
 
+	// TODO repensar, esto puede ser mayor qeu 1 y no puedes saber con la comprobación boleana
+	// si no había más elementos en el buffer.
 	int unico_elemento= size_cbuffer_t(mbox->cbuffer);
 	mbox_post(mbox,msg);
 
 	if (!unico_elemento) {
 		pthread_cond_broadcast( &(mbox->not_empty->cond) );
 	}
+
+	pthread_mutex_unlock(mbox->mutex);
 }
 
 /*-----------------------------------------------------------------------------------*/
@@ -106,9 +114,21 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
  ** y, en tal caso, despertar a uno de esos hilos.
  **/
 
-void*
-mbox_fetch(struct sys_mbox *mbox)
+void* mbox_fetch(struct sys_mbox *mbox)
 {
+	pthread_mutex_lock(mbox->mutex);
+
+	while( size_cbuffer_t(mbox->cbuffer) == 0) {
+
+		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
+	}
+
+	if (mbox->wait_send > 0) {
+		sys_sem_signal( mbox->not_empty );
+	}
+
+	pthread_mutex_unlock(mbox->mutex);
+
  return mbox;
 }
 
