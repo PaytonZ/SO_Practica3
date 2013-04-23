@@ -84,19 +84,25 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 	pthread_mutex_lock(mbox->mutex);
 
-	if (size_cbuffer_t(mbox->cbuffer) == mbox->cbuffer->max_size) {
+	if (is_full_cbuffer_t (mbox->cbuffer) !=0) {
 		mbox->wait_send++;
 	}
 
-	while( size_cbuffer_t(mbox->cbuffer) == mbox->cbuffer->max_size) {
+	while(is_full_cbuffer_t (mbox->cbuffer) !=0) {
 
-		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
+		pthread_cond_wait( &(mbox->not_full->cond), &(mbox->not_full->mutex));
 	}
 
-	// TODO repensar, esto puede ser mayor qeu 1 y no puedes saber con la comprobación boleana
-	// si no había más elementos en el buffer.
+	mbox->wait_send--;
+
+	while(is_full_cbuffer_t (mbox->cbuffer) !=0) {
+
+			pthread_cond_wait( &(mbox->not_full->cond), &(mbox->not_full->mutex));
+	}
+
+	insert_cbuffer_t(mbox->cbuffer,msg);
 	int unico_elemento= size_cbuffer_t(mbox->cbuffer);
-	mbox_post(mbox,msg);
+
 
 	if (!unico_elemento) {
 		pthread_cond_broadcast( &(mbox->not_empty->cond) );
@@ -118,13 +124,16 @@ void* mbox_fetch(struct sys_mbox *mbox)
 {
 	pthread_mutex_lock(mbox->mutex);
 
-	while( size_cbuffer_t(mbox->cbuffer) == 0) {
+	while(is_empty_cbuffer_t(mbox->cbuffer)!=0) {
 
-		pthread_cond_wait( &(mbox->not_full->cond), mbox->mutex);
+		pthread_cond_wait( &(mbox->not_empty->cond), &(mbox->not_empty->mutex));
 	}
+	void *msg;
+
+	msg=head_cbuffer_t(mbox->cbuffer);
 
 	if (mbox->wait_send > 0) {
-		sys_sem_signal( mbox->not_empty );
+		pthread_cond_broadcast( &(mbox->not_full->cond) );
 	}
 
 	pthread_mutex_unlock(mbox->mutex);

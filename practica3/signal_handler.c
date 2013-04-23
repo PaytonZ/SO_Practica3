@@ -48,6 +48,7 @@ void USR1_handler(int signo) {
 
 	// Create a client
 	// ....
+	create_client(gbl_mbox, default_client_type, nr_msgs, nr_secs);
 	
 	my_resume();
 }

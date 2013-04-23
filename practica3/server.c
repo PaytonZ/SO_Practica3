@@ -6,6 +6,7 @@
 #include <time.h>
 #include <string.h>
 
+
 char serv_up=0;
 pthread_t server_id;
 
@@ -68,6 +69,17 @@ int execute_time_service(message_t* msg, int msgcnt) {
 	return 0;
 }
 
+int execute_random_service(message_t* msg, int msgcnt) {
+
+	int random_numer = rand();
+
+	fprintf(logfile, "SERVER: [#%i]: random : %d", msgcnt, random_numer);
+
+	msg->content = &(random_numer);
+
+	return 0;
+}
+
 void* server_thread(void* ptr)
 {
 	static int msgcount=0;
@@ -96,6 +108,12 @@ void* server_thread(void* ptr)
 				break;
 			case NONE:
 				fprintf(logfile,"Server. NONE message received. Doing nothing\n");
+				break;
+
+			case RANDOM:
+				if (execute_random_service(msg, msgcount) != 0) {
+					fprintf(stderr, "ERROR ejecutando acción RANDOM");
+				}
 				break;
 			default:
 				break;
