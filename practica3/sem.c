@@ -47,7 +47,6 @@ sys_sem_wait(struct sys_sem *sem)
 		pthread_cond_wait( &(sem->cond), &(sem->mutex) );
 	}
 
-
 	sem->c=0;
 	
 	pthread_mutex_unlock( &(sem->mutex) );

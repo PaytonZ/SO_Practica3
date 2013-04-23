@@ -71,10 +71,13 @@ int execute_time_service(message_t* msg, int msgcnt) {
 
 int execute_random_service(message_t* msg, int msgcnt) {
 
+	// Se genera un número pseudo-aleatorio
 	int random_numer = rand();
 
+	// Lo registramos
 	fprintf(logfile, "SERVER: [#%i]: random : %d", msgcnt, random_numer);
 
+	// Y se introduce en el mensaje.
 	msg->content = &(random_numer);
 
 	return 0;
@@ -106,14 +109,13 @@ void* server_thread(void* ptr)
 					fprintf(stderr,"ERROR when executing TIME action\n");
 				}
 				break;
-			case NONE:
-				fprintf(logfile,"Server. NONE message received. Doing nothing\n");
-				break;
-
 			case RANDOM:
 				if (execute_random_service(msg, msgcount) != 0) {
 					fprintf(stderr, "ERROR ejecutando acción RANDOM");
 				}
+				break;
+			case NONE:
+				fprintf(logfile,"Server. NONE message received. Doing nothing\n");
 				break;
 			default:
 				break;
