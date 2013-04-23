@@ -84,6 +84,8 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 	fprintf(stdout, "%s\n", "Entrando en mbox_post");
 
+	pthread_mutex_lock(mbox->mutex);
+
 	if (is_full_cbuffer_t(mbox->cbuffer) != 0) {
 		mbox->wait_send++;
 
@@ -103,8 +105,6 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 		pthread_cond_wait( &(mbox->not_full->cond), &(mbox->not_full->mutex));
 	}
-
-	pthread_mutex_lock(mbox->mutex);
 
 	fprintf(stdout, "%s\n", "--Insertando el mensaje");
 
@@ -157,7 +157,7 @@ void* mbox_fetch(struct sys_mbox *mbox)
 		pthread_cond_broadcast( &(mbox->not_full->cond) );
 	}
 
- return mbox;
+ return msg;
 }
 
 /*-----------------------------------------------------------------------------------*/
