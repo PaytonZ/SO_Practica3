@@ -78,7 +78,7 @@ int execute_random_service(message_t* msg, int msgcnt) {
 	fprintf(logfile, "SERVER: [#%i]: random : %d", msgcnt, random_numer);
 
 	// Y se introduce en el mensaje.
-	msg->content = &(random_numer);
+	msg->content = &random_numer;
 
 	return 0;
 }

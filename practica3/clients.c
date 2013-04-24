@@ -76,9 +76,9 @@ void* client_thread (void* ptr) {
 	fprintf(logfile,"NEW client of type %d with period %d \n",arg->m_type, arg->period);
 	
 	for (i=0;i<arg->n_messages; i++) {
-		if (  ( msg=new_message(arg->m_type ) )  == NULL ) {
+		if (  ( msg=new_message(arg->m_type ) ) == NULL ) {
 			fprintf(stderr,"Error when creating  message\n");
-		pthread_exit(NULL);
+			pthread_exit(NULL);
 		}
 		
 		// Post message to mailbox
