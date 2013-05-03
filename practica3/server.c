@@ -5,6 +5,7 @@
 #include "message.h"
 #include <time.h>
 #include <string.h>
+#include <limits.h>
 
 
 char serv_up=0;
@@ -72,13 +73,14 @@ int execute_time_service(message_t* msg, int msgcnt) {
 int execute_random_service(message_t* msg, int msgcnt) {
 
 	// Se genera un número pseudo-aleatorio
-	int random_numer = rand();
+	int random_numer = rand() % 2000;
 
 	// Lo registramos
-	fprintf(logfile, "SERVER: [#%i]: random : %d", msgcnt, random_numer);
+	fprintf(logfile, "SERVER: [#%i]: random : %d ", msgcnt, random_numer);
 
 	// Y se introduce en el mensaje.
-	msg->content = &random_numer;
+	int* random_aux= (int*)msg->content ;
+	*random_aux=random_numer;
 
 	return 0;
 }

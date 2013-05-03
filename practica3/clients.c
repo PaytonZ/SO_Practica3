@@ -38,7 +38,7 @@ static void process_answer(message_t* msg) {
 	switch (msg->tipo) {
 		case RANDOM:
 			if (msg->content) {
-				int* tmp = (int*) msg->content;
+				int *tmp = (int*) msg->content;
 				fprintf(logfile,"CLIENT: random %d\n",*tmp);
 			}
 			else

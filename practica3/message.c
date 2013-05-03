@@ -19,7 +19,7 @@ message_t* new_message(enum _message_types_ tipo) {
 			m->content = (int*) malloc(MAX_TIME_STRING_LEN*sizeof(char));
 			break;
 		case NONE:
-			m->content = NULL;
+			m->content = NULL; break;
 		default:
 			break;
 	}

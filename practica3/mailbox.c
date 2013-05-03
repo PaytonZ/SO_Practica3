@@ -82,41 +82,41 @@ void mbox_free(struct sys_mbox *mbox) {
 void mbox_post( struct sys_mbox *mbox, void *msg)
 {
 
-	fprintf(stdout, "%s\n", "Entrando en mbox_post");
+	//fprintf(stdout, "%s\n", "Entrando en mbox_post");
 
 	pthread_mutex_lock(mbox->mutex);
 
 	if (is_full_cbuffer_t(mbox->cbuffer) != 0) {
 		mbox->wait_send++;
 
-		fprintf(stdout, "%s\n", "--Un hilo esperando por que el buffer está lleno");
+//	fprintf(stdout, "%s\n", "--Un hilo esperando por que el buffer está lleno");
 	}
 
 	while(is_full_cbuffer_t(mbox->cbuffer) != 0) {
 
 		pthread_cond_wait( &(mbox->not_full->cond), &(mbox->not_full->mutex));
-		fprintf(stdout, "%s\n", "--1º while: Hilo en wait a que el buffer esté vacío");
+//		fprintf(stdout, "%s\n", "--1º while: Hilo en wait a que el buffer esté vacío");
 	}
 
 	mbox->wait_send--;
 
 	while(is_full_cbuffer_t(mbox->cbuffer) != 0) {
-		fprintf(stdout, "%s\n", "--1º while: Esperando a que el buffer esté vacío");
+//		fprintf(stdout, "%s\n", "--1º while: Esperando a que el buffer esté vacío");
 
 		pthread_cond_wait( &(mbox->not_full->cond), &(mbox->not_full->mutex));
 	}
 
-	fprintf(stdout, "%s\n", "--Insertando el mensaje");
+//	fprintf(stdout, "%s\n", "--Insertando el mensaje");
 
 	int unico_elemento = size_cbuffer_t(mbox->cbuffer);
 	insert_cbuffer_t(mbox->cbuffer, msg);
 
 	pthread_mutex_unlock(mbox->mutex);
 
-	fprintf(stdout, "--Número de elementos en el buffer %d\n", unico_elemento);
+//	fprintf(stdout, "--Número de elementos en el buffer %d\n", unico_elemento);
 
 	if (!unico_elemento) {
-		fprintf(stdout, "%s\n", "--Único elemento y notificando a hilos");
+//		fprintf(stdout, "%s\n", "--Único elemento y notificando a hilos");
 		pthread_cond_broadcast( &(mbox->not_empty->cond) );
 	}
 }
@@ -132,28 +132,28 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 void* mbox_fetch(struct sys_mbox *mbox)
 {
-	fprintf(stdout, "%s\n", "Entrando en mbox_fetch");
+//	fprintf(stdout, "%s\n", "Entrando en mbox_fetch");
 
 	while(is_empty_cbuffer_t(mbox->cbuffer) != 0) {
-		fprintf(stdout, "%s\n", "--Buffer vacío wait al hilo hasta que se llene");
+	//	fprintf(stdout, "%s\n", "--Buffer vacío wait al hilo hasta que se llene");
 
 		pthread_cond_wait( &(mbox->not_empty->cond), &(mbox->not_empty->mutex));
 	}
 
-	fprintf(stdout, "%s\n", "--Entrando en mbox_fetch");
+//	fprintf(stdout, "%s\n", "--Entrando en mbox_fetch");
 
 	pthread_mutex_lock(mbox->mutex);
 
 	void *msg = head_cbuffer_t(mbox->cbuffer);
 	remove_cbuffer_t(mbox->cbuffer);
 
-	fprintf(stdout, "--El mensaje: %s\n", (char*)msg);
+//	fprintf(stdout, "--El mensaje: %s\n", (char*)msg);
 
 	pthread_mutex_unlock(mbox->mutex);
 
-	fprintf(stdout, "%s\n", "--Comprobando si quedan hilos a la espera");
+//	fprintf(stdout, "%s\n", "--Comprobando si quedan hilos a la espera");
 	if (mbox->wait_send > 0) {
-		fprintf(stdout, "%s\n", "--Notificando al resto de hilos que hay espacio en el buffer");
+	//	fprintf(stdout, "%s\n", "--Notificando al resto de hilos que hay espacio en el buffer");
 		pthread_cond_broadcast( &(mbox->not_full->cond) );
 	}
 
