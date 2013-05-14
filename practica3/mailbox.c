@@ -16,10 +16,9 @@
  */
 struct sys_mbox {
 	cbuffer_t* cbuffer; 			/* Buffer circular en el que se almacenan los mensajes */
-	struct sys_sem *not_empty; /* Semáforo para esperar hasta que el buzón no esté vacío */
-	struct sys_sem *not_full;  /* Semáforo para esperar hasta que el buzón no esté lleno */
-	pthread_mutex_t *mutex;			/* Cerrojo para garantizar exclusión mutua */
-	int wait_send;					/* Contador de hilos que están bloqueados en un mbox_post */
+	pthread_cond_t not_empty;
+	pthread_cond_t not_full;		/* Cerrojo para garantizar exclusión mutua */
+	pthread_mutex_t *mutex;
 };
 
 /*-----------------------------------------------------------------------------------*/
@@ -38,12 +37,13 @@ struct sys_mbox* mbox_new(unsigned int max_size) {
 		free(mailbox);
 		return NULL ;
 	}
-	mailbox->not_empty = sys_sem_new(0);
-	mailbox->not_full = sys_sem_new(0);
+
+	pthread_cond_init(&(mailbox->not_empty), NULL);
+	pthread_cond_init(&(mailbox->not_full), NULL);
 	mailbox->mutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(mailbox->mutex, NULL );
 
-	mailbox->wait_send = 0;
+	//mailbox->wait_send = 0;
 	return mailbox;
 }
 
@@ -51,14 +51,14 @@ struct sys_mbox* mbox_new(unsigned int max_size) {
 void mbox_free(struct sys_mbox *mbox) {
 	if ((mbox != NULL )) {
 
-		sys_sem_free(mbox->not_empty);
-		sys_sem_free(mbox->not_full);
+		pthread_cond_destroy(&(mbox->not_empty));
+		pthread_cond_destroy(&(mbox->not_full));
 
 		pthread_mutex_destroy(mbox->mutex);
 		free(mbox->mutex);
 		destroy_cbuffer_t(mbox->cbuffer);
 
-		mbox->not_empty = mbox->not_full = NULL;
+	//	mbox->not_empty = mbox->not_full = NULL;
 		mbox->mutex = NULL;
 		mbox->cbuffer = NULL;
 
@@ -84,26 +84,24 @@ void mbox_post( struct sys_mbox *mbox, void *msg)
 
 	pthread_mutex_lock(mbox->mutex);
 
-	while(is_full_cbuffer_t(mbox->cbuffer) != 0) {
 
-		mbox->wait_send++;
+	while(is_full_cbuffer_t(mbox->cbuffer)) {
 
-		pthread_mutex_unlock(mbox->mutex);
 
-		sys_sem_wait(mbox->not_full);
 
-		pthread_mutex_lock(mbox->mutex);
+		pthread_cond_wait(&(mbox->not_full),mbox->mutex);
 
-		mbox->wait_send--;
+
+
 	}
 
-	int unico_elemento = size_cbuffer_t(mbox->cbuffer);
+	//int unico_elemento = size_cbuffer_t(mbox->cbuffer);
 	insert_cbuffer_t(mbox->cbuffer, msg);
 
-	if (!unico_elemento) {
+	//if (!unico_elemento) {
 		
-		sys_sem_signal(mbox->not_empty);
-	}
+		pthread_cond_signal(&(mbox->not_empty));
+	//}
 
 	pthread_mutex_unlock(mbox->mutex);
 }
@@ -122,22 +120,23 @@ void* mbox_fetch(struct sys_mbox *mbox)
 
 	pthread_mutex_lock(mbox->mutex);
 
-	while(is_empty_cbuffer_t(mbox->cbuffer) != 0) {
+
+	while(is_empty_cbuffer_t(mbox->cbuffer)) {
 		
-		pthread_mutex_unlock(mbox->mutex);
 
-		sys_sem_wait(mbox->not_empty);
+		pthread_cond_wait(&(mbox->not_empty),mbox->mutex);
 
-		pthread_mutex_lock(mbox->mutex);
 	}
+
+
 
 	void *msg = head_cbuffer_t(mbox->cbuffer);
 	remove_cbuffer_t(mbox->cbuffer);
 
-	if (mbox->wait_send > 0) {
+	//if (mbox->wait_send > 0) {
 
-		sys_sem_signal(mbox->not_full);
-	}
+		pthread_cond_signal(&(mbox->not_full));
+	//}
 
 	pthread_mutex_unlock(mbox->mutex);
 

@@ -10,6 +10,7 @@
 
 char serv_up=0;
 pthread_t server_id;
+int msgcount=0;
 
 //The global logfile
 FILE* logfile;
@@ -86,7 +87,7 @@ int execute_random_service(message_t* msg, int msgcnt) {
 
 void* server_thread(void* ptr)
 {
-	static int msgcount=0;
+
 	message_t* msg;
 
 	// Setup our pointer to the mailbox (it was created by main)

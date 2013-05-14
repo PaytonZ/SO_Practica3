@@ -6,7 +6,7 @@
 #include "clients.h"
 #include "server.h"
 
-
+extern int msgcount;
 
 unsigned char _pause = 1; // Shared variable to pause/resume execution
 /// Semaphores to pause the signal_handler thread when waiting for signals
@@ -53,6 +53,18 @@ void USR1_handler(int signo) {
 	my_resume();
 }
 
+void USR2_handler(int signo) {
+
+	pthread_t id;
+
+	id = pthread_self();
+	fprintf(logfile,"thread %u: caught signal %d (USR2)\n", (unsigned int) id, signo);
+
+	msgcount = 0;
+
+	my_resume();
+}
+
 
 void SIGINT_handler(int signo) {
     
@@ -89,6 +101,16 @@ void* signal_handler_thread(void * c)
         printf("ERROR: can't install SIGINT signal handler");
 		return NULL;
 	}
+
+	act.sa_handler = USR2_handler;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	if (sigaction(SIGUSR2, &act, NULL) != 0) {
+		printf("ERROR: can't install SIGUSR2 signal handler");
+		return NULL;
+	}
+
+
 	
 	
 	
